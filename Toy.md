@@ -18,6 +18,10 @@ When you click the **Knit** button a document will be generated that includes bo
 ```{r cars}
 summary(cars)
 ```
+You can also embed plots, for example:
+
+{r pressure, echo=FALSE}
+plot(pressure)
 
 ## Including Plots
 
