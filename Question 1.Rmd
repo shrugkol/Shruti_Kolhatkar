@@ -1,0 +1,208 @@
+---
+title: "STA 380, Part 2, Exercises 1"
+author: "Bhavna Kaparaju,Callie Gilmore, Dawson Cook, Shruti Kolhatkar"
+date: "August 18, 2020"
+output: html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 1: Visual Story Telling: Green Buildings
+
+## Analysis of the Experts Decisions
+
+```{r 1.1, echo=False}
+library(mosaic)
+library(tidyverse)
+library(ggplot2)
+green = read.csv('greenbuildings.csv')
+green_only = subset(green, green_rating==1)
+non_green = subset(green, green_rating==0)
+attach(green)
+```
+
+### Removing Bottom 10% of Leasing Rates
+Below is the histogram displaying the distribution of leasing rate for the non-green buildings.
+
+```{r 1.2, echo=False}
+hist(non_green$leasing_rate, 
+     col=c('red', rep('grey',9)),
+     main = "Leasing Rate for Non-Green Buildings", 
+     xlab = "Leasing Rate")
+```
+
+Below is the histogram displaying the distribution of leasing rate for the green buildings.
+```{r 1.3, echo=False}
+hist(green_only$leasing_rate, 
+     col=c('red', rep('grey',9)),
+     main = "Leasing Rate for Green Buildings", 
+     xlab = "Leasing Rate")
+```
+
+Based on the distributions shown above, we do not believe that we should remove the buildings with leasing rates that are less than 10%. While the non green building distribution shows a slight left skew with some outliers, the green building distribution does not. By removing these values, we believe we would be compromising the data set by not including all information available. 
+
+### Using Median instead of Mean
+Since we did not remove the outliers above, we believe it is important to use median intead of the mean because the median is more robust to outliers. We agree with the experts decision to do this.
+
+Below is the median value for the green buildings rent:
+```{r 1.4, echo=False}
+median(green_only$Rent)
+```
+
+Below is the median value for the non-green buildings rent:
+```{r 1.5, echo=False}
+median(non_green$Rent)
+```
+Based on the results above, on average rent is more expensive in green buildings over non_green buildings. This leads us to believe that there may be a advantage to building more green buildings but we will rely further analysis to confirm. 
+
+## Potential Other Causes of Rent Increases
+The guru stated that since our building will be 250,000 square feet and that there is an increase of 2.60 dollars for green buildings, that our estimated revenue would be 650,000 dollars more. However, we are unsure about this conclusion. We believe that other specifications about the building could impact overall revenue. 
+
+### Age Vs Rent
+Below, we display the relationship between age and rent. From this, we can see that majority of the green buildings are newer, which makes sense as this is a new development in construction. However, this graph does not give us a clear picture if the age largely impacts the overall rent.
+```{r 1.6, echo=False}
+ggplot(data = green) + geom_point(mapping = aes(x = age, y = Rent, color = green_rating))
+```
+
+### Leasing Rate vs Rent
+Below, the graph displays the relationship between leasing rate and rent. It appears to have a slightly positive correlation. This makes sense as more desirable will lease to capacity more often. 
+
+```{r 1.7, echo=False}
+ggplot(data = green) + geom_point(mapping = aes(x = leasing_rate, y = Rent, color = green_rating))
+```
+
+### Rent vs Class
+Based on the below boxplot, we have concluded that class could be indicative of rent increases. So class is potentially a variable that would affect rent and affect our conclusion of revenue increase.
+```{r 1.8, echo=False}
+green$class = ifelse(green$class_a==1, 1, ifelse(green$class_b==1, 2, 3))
+boxplot(green$Rent~green$class,
+        outline=FALSE,
+        boxwex=0.5, 
+        col=c('red','blue','green'), 
+        names = c("Class A", "Class B", "Class C"), 
+        main="Rent vs. Class",
+        xlab = "Class Rating", ylab="Annual Rent  ($/ sqft)")
+```
+
+### Rent vs Renovated
+The below graph shows that the mean values for renovated vs non-renovated buildings are very similar. While, the renovated buildings have a higher maximum rent value, it does not appear that all renovated buildings cost more in rent. We believe that this is due to the fact that new buildings do not require renovations so while an older building that is renovated will cost more than an older building that is not renovated, a newer builder that is not technically renovated will still cost more than the older renovated building. Due to this, we do not believe that the renovated variable is highly indicative of price. 
+
+```{r 1.9, echo=False}
+boxplot(green$Rent~green$renovated,
+        outline=FALSE,
+        boxwex=0.5, 
+        col=c('red','blue'), 
+        names = c("Renovated", "Non-Renovated"), 
+        main="Rent vs. Renovated",
+        xlab = "Renovated", ylab="Annual Rent  ($/ sqft)")
+```
+
+### Rent vs Amenities
+Surprisingly enough, it also does not appear that buildings containing amentities have higher rents. Due to this, we do not think that the amenities variable is highly indicative of increased rent.
+
+```{r 1.10, echo=False}
+boxplot(green$Rent~green$amenities,
+        outline=FALSE,
+        boxwex=0.5, 
+        col=c('red','blue'), 
+        names = c("Amenities", "No Amenities"), 
+        main="Rent vs. Amenities",
+        xlab = "Amenities", ylab="Annual Rent  ($/ sqft)")
+```
+
+
+## Conclusion and Recommendation 
+Based on our analysis from the above figures, it does appear that the main variable that increases the cost of rent is whether or not the building is a green building. It also appears that green buildings rent at a higher leasing rate than non-green buildings.
+
+
+# Question 2: Visual Story Telling: Flights at ABIA
+**Objective:** To visualize an interesting story about flights in and out of Austin. 
+## Initial Analysis 
+```{r 2.1, echo=False}
+rm(list=ls())
+library(tidyverse)
+library(ggplot2)
+library(ggrepel)
+abia = read.csv('ABIA.csv')
+```
+
+## Visual Analaysis
+### DepDelay vs ArrDelay
+There seems to be a positive correlation between Departure Delay and Arrival Delay, which makes sense as often times when a plane leaves late, it will arrive at the location late as well. 
+```{r 2.2, echo=False}
+ggplot(data = abia) + geom_point(mapping = aes(x = DepDelay, y = ArrDelay))
+```
+
+
+```{r 2.3, echo=False}
+abia$arrive_d=ifelse(abia$ArrDelay>0,abia$ArrDelay, NA)
+abia$arrive_a=ifelse(abia$ArrDelay<=0,-abia$ArrDelay,NA)
+abia$depart_d=ifelse(abia$DepDelay>0,abia$DepDelay,NA)
+abia$depart_a=ifelse(abia$DepDelay<=0,-abia$DepDelay,NA)
+ggplot(abia, aes(x=Month, y=depart_d)) + 
+  geom_bar(stat='identity') + scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11,12))
+```
+
+
+```{r 2.4, echo=False}
+ggplot(abia, aes(x=DayOfWeek, y=depart_d)) + 
+  geom_bar(stat='identity') + scale_x_continuous(breaks=c(1,2,3,4,5,6,7))
+```
+
+
+```{r 2.5, echo=False}
+ggplot(abia,aes(x = Month ,na.rm = TRUE, colour = DelayType)) +
+  geom_line(aes(y=arrive_d,color='Arrival'),stat = "summary", fun.y = "mean",na.rm = TRUE)+
+  geom_line(aes(y=depart_d,color='Departure'),stat = "summary", fun.y = "mean",na.rm = TRUE)+
+  scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11,12))+
+  ylab('Delay Time (min)')+
+  ggtitle('Average Monthly Arrival/Departure Delay Time')+
+  theme_minimal()
+```
+
+```{r 2.6, echo=False}
+ggplot(abia,aes(x = DayOfWeek ,na.rm = TRUE, colour = DelayType)) +
+  geom_line(aes(y=arrive_d,color='Arrival'),stat = "summary", fun.y = "mean",na.rm = TRUE)+
+  geom_line(aes(y=depart_d,color='Departure'),stat = "summary", fun.y = "mean",na.rm = TRUE)+
+  scale_x_continuous(breaks=c(1,2,3,4,5,6,7))+
+  ylab('Delay Time (min)')+
+  ggtitle('Average Daily Arrival/Departure Delay Time')+
+  theme_minimal()
+```
+
+
+```{r 2.7, echo=False}
+ggplot(abia, aes(x=Month, na.rm = TRUE, colour = Type)) + 
+  geom_line(aes(y = LateAircraftDelay, colour="Late Aircraft Delay"), stat = "summary", fun.y = "mean", na.rm = TRUE) + 
+  geom_line(aes(y = SecurityDelay, colour = "Security Delay"), stat = "summary", fun.y = "mean", na.rm = TRUE) +
+  geom_line(aes(y = NASDelay, colour = "NAS Delay"), stat = "summary", fun.y = "mean", na.rm = TRUE) +
+  geom_line(aes(y = WeatherDelay, colour = "Weather Delay"), stat = "summary", fun.y = "mean", na.rm = TRUE) +
+  geom_line(aes(y = CarrierDelay, colour = "Carrier Delay"), stat = "summary", fun.y = "mean", na.rm = TRUE) +
+  ylab(label="Delay Time (min)") + 
+  xlab("Month")+
+  theme_minimal() +
+  scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11,12)) +
+  ggtitle('Average Delay Time Due to Five Types of Delay')
+```
+
+
+```{r 2.8, echo=False}
+arr_aus = subset(abia, Dest=='AUS')
+dep_aus = subset(abia, Origin == 'AUS')
+ggplot(dep_aus, aes(x=Month, y=depart_d)) + 
+  geom_bar(stat='identity') + scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11,12))
+```
+
+
+```{r 2.9, echo=False}
+ggplot(abia, aes(x=UniqueCarrier, y=depart_d, na.rm = TRUE))+
+  stat_summary(fun.y="mean", geom="bar",fill='pink', na.rm = TRUE)+
+  stat_summary(aes(label=round(..y..,2)), fun.y="mean", geom="text", size=3,vjust = -0.5,na.rm = TRUE)+
+  theme_minimal()+
+  ggtitle('Average departure delay for each Carrier')+
+  xlab('Unique Carrier Code')+
+  ylab('Departure Delay (min)')+
+  coord_cartesian(ylim=c(0,45))
+``
